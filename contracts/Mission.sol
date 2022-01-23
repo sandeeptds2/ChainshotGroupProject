@@ -55,6 +55,10 @@ contract Mission {
         // Decrement the levels of the participant nodes in the chain
     }
 
+    function getTrustChain (address supporter) external view returns(bytes32[] memory) {
+        return chain[supporter];
+    }
+
     function getTrustLevel () external {
 
         // Juras is the name of the coin JRM
