@@ -1,6 +1,8 @@
 // // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "hardhat/console.sol";
+
 struct Trust {
     uint level;
     address holder;
@@ -18,7 +20,6 @@ contract Mission {
         root.proposal = statement;
 
         for (uint i=0; i < founders.length; i++) {
-
             bytes32 key = sha256(abi.encodePacked(founders[i], address(this)));
 
             root.bonds[key].level = 1;
@@ -37,13 +38,22 @@ contract Mission {
 
     }
 
-    function establishTrust (address supporter, address leader, string memory proposal) external {
+    function establishTrust (address leader, string memory proposal) external {
+        root.level += 1;
+        Trust storage leaderNode = root;
+        for (uint i=0; i < chain[leader].length; i++) {
+            chain[msg.sender].push(chain[leader][i]);
+            leaderNode = leaderNode.bonds[chain[leader][i]];
+            leaderNode.level += 1;
+        }
 
-        // Find the trust node of the leader, and add a node underneath it by traversing to the base node.
+        bytes32 key = sha256(abi.encodePacked(msg.sender, leaderNode.holder));
 
-        // If any node isn't found, the transaction fails.
+        leaderNode.bonds[key].level = 1;
+        leaderNode.bonds[key].holder = msg.sender;
+        leaderNode.bonds[key].proposal = proposal;
+        chain[msg.sender].push(key);
     }
-
 
     function breakTrust (address supporter, address leader, string memory proposal) external {
 
@@ -59,17 +69,14 @@ contract Mission {
         return chain[supporter];
     }
 
-    function getTrustLevel () external {
+    function getTrustLevel (address supporter) external view returns(uint) {
+        Trust storage supporterNode = root;
 
-        // Juras is the name of the coin JRM
+        for (uint i=0; i < chain[supporter].length; i++) {
+            supporterNode = supporterNode.bonds[chain[supporter][i]];
+        }
 
-        // Calculate the value of Juras held by each node.
-    }
-
-    function getTrustNodeByAddresss () external { // Make this private
-
-        // Get the node of the address hash passed.
-
+        return supporterNode.level;
     }
 
     function getJurasForAddresss () external { // Make this private
